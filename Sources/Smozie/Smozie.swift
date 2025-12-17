@@ -8,61 +8,143 @@
 import UIKit
 import SwiftUI
 
-// MARK: - Re-export SwiftUI components
-@available(iOS 14.0, *)
-public typealias SmozieSwiftUIView = SmozieView
-
-/// Главный класс библиотеки Smozie
+/// Главный класс библиотеки Smozie (аналог Upmob для Android)
 /// Используйте этот класс для инициализации и запуска SDK
 public final class Smozie {
     
-    /// Singleton экземпляр библиотеки
-    public static let shared = Smozie()
+    // MARK: - Properties
     
-    /// Флаг инициализации
-    private var isInitialized = false
+    /// Слушатель ошибок
+    public weak var onFailListener: OnFailListener?
     
-    /// URL для WebView (по умолчанию google.com)
-    private var webViewURL: URL = URL(string: "https://www.google.com")!
+    /// Параметры инициализации
+    private let token: String
+    private let apiKey: String
+    private let userId: String
+    private let deviceId: String
     
-    private init() {}
+    // MARK: - Initialization
     
-    /// Инициализирует библиотеку Smozie
-    /// - Parameter configuration: Опциональная конфигурация (зарезервировано для будущего использования)
-    public func initialize(configuration: SmozieConfiguration = .default) {
-        self.webViewURL = configuration.url
-        self.isInitialized = true
-        print("[Smozie] SDK инициализирован")
+    /// Инициализирует SDK и сразу открывает WebView
+    /// - Parameters:
+    ///   - viewController: ViewController для презентации
+    ///   - token: Токен авторизации
+    ///   - apiKey: API ключ
+    ///   - userId: ID пользователя (опционально)
+    ///   - onFailListener: Слушатель ошибок
+    public init(
+        viewController: UIViewController,
+        token: String,
+        apiKey: String,
+        userId: String = "",
+        onFailListener: OnFailListener
+    ) {
+        self.token = token
+        self.apiKey = apiKey
+        self.userId = userId
+        self.onFailListener = onFailListener
+        
+        // Получаем Device ID (аналог ANDROID_ID)
+        self.deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        
+        // Сразу открываем WebView (как в Android версии)
+        presentWebView(from: viewController)
     }
     
-    /// Открывает WebView с заданным URL
-    /// - Parameter viewController: ViewController, из которого будет показан WebView
-    public func present(from viewController: UIViewController) {
-        guard isInitialized else {
-            print("[Smozie] Ошибка: SDK не инициализирован. Вызовите Smozie.shared.initialize() перед использованием.")
-            return
-        }
+    // MARK: - Private Methods
+    
+    private func presentWebView(from viewController: UIViewController) {
+        let webViewController = SmozieWebViewController(
+            token: token,
+            apiKey: apiKey,
+            userId: userId,
+            deviceId: deviceId,
+            onFailListener: onFailListener
+        )
         
-        let webViewController = SmozieWebViewController(url: webViewURL)
         let navigationController = UINavigationController(rootViewController: webViewController)
         navigationController.modalPresentationStyle = .fullScreen
+        navigationController.modalTransitionStyle = .crossDissolve
+        
         viewController.present(navigationController, animated: true)
     }
 }
 
-/// Конфигурация для инициализации Smozie SDK
-public struct SmozieConfiguration {
+// MARK: - SwiftUI Support
+
+/// SwiftUI View для отображения Smozie WebView
+@available(iOS 14.0, *)
+public struct SmozieView: UIViewControllerRepresentable {
     
-    /// URL для загрузки в WebView
-    public let url: URL
+    private let token: String
+    private let apiKey: String
+    private let userId: String
+    private let deviceId: String
+    private weak var onFailListener: OnFailListener?
+    @Binding private var isPresented: Bool
     
-    /// Конфигурация по умолчанию (google.com)
-    public static let `default` = SmozieConfiguration(url: URL(string: "https://www.google.com")!)
-    
-    /// Создаёт конфигурацию с кастомным URL
-    /// - Parameter url: URL для загрузки в WebView
-    public init(url: URL) {
-        self.url = url
+    /// Создаёт SmozieView
+    /// - Parameters:
+    ///   - token: Токен авторизации
+    ///   - apiKey: API ключ
+    ///   - userId: ID пользователя (опционально)
+    ///   - onFailListener: Слушатель ошибок
+    ///   - isPresented: Binding для управления отображением
+    public init(
+        token: String,
+        apiKey: String,
+        userId: String = "",
+        onFailListener: OnFailListener?,
+        isPresented: Binding<Bool>
+    ) {
+        self.token = token
+        self.apiKey = apiKey
+        self.userId = userId
+        self.deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        self.onFailListener = onFailListener
+        self._isPresented = isPresented
     }
+    
+    public func makeUIViewController(context: Context) -> UINavigationController {
+        let webViewController = SmozieWebViewController(
+            token: token,
+            apiKey: apiKey,
+            userId: userId,
+            deviceId: deviceId,
+            onFailListener: onFailListener
+        )
+        webViewController.onDismiss = {
+            isPresented = false
+        }
+        let navigationController = UINavigationController(rootViewController: webViewController)
+        return navigationController
+    }
+    
+    public func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {}
 }
 
+// MARK: - View Extension
+
+@available(iOS 14.0, *)
+public extension View {
+    
+    /// Показывает Smozie WebView как fullScreenCover
+    func smozie(
+        isPresented: Binding<Bool>,
+        token: String,
+        apiKey: String,
+        userId: String = "",
+        onFailListener: OnFailListener?
+    ) -> some View {
+        self.fullScreenCover(isPresented: isPresented) {
+            SmozieView(
+                token: token,
+                apiKey: apiKey,
+                userId: userId,
+                onFailListener: onFailListener,
+                isPresented: isPresented
+            )
+            .ignoresSafeArea()
+        }
+    }
+}
