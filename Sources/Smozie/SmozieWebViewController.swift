@@ -18,6 +18,9 @@ final class SmozieWebViewController: UIViewController {
     private var progressView: UIProgressView!
     private var progressObservation: NSKeyValueObservation?
     
+    /// Callback вызываемый при закрытии (для SwiftUI)
+    var onDismiss: (() -> Void)?
+    
     // MARK: - Initialization
     
     init(url: URL) {
@@ -107,7 +110,9 @@ final class SmozieWebViewController: UIViewController {
     // MARK: - Actions
     
     @objc private func closeButtonTapped() {
-        dismiss(animated: true)
+        dismiss(animated: true) { [weak self] in
+            self?.onDismiss?()
+        }
     }
     
     @objc private func refreshButtonTapped() {
