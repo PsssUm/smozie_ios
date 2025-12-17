@@ -62,11 +62,10 @@ public final class Smozie {
             onFailListener: onFailListener
         )
         
-        let navigationController = UINavigationController(rootViewController: webViewController)
-        navigationController.modalPresentationStyle = .fullScreen
-        navigationController.modalTransitionStyle = .crossDissolve
+        webViewController.modalPresentationStyle = .fullScreen
+        webViewController.modalTransitionStyle = .crossDissolve
         
-        viewController.present(navigationController, animated: true)
+        viewController.present(webViewController, animated: true)
     }
 }
 
@@ -105,7 +104,7 @@ public struct SmozieView: UIViewControllerRepresentable {
         self._isPresented = isPresented
     }
     
-    public func makeUIViewController(context: Context) -> UINavigationController {
+    public func makeUIViewController(context: Context) -> SmozieWebViewController {
         let webViewController = SmozieWebViewController(
             token: token,
             apiKey: apiKey,
@@ -116,11 +115,10 @@ public struct SmozieView: UIViewControllerRepresentable {
         webViewController.onDismiss = {
             isPresented = false
         }
-        let navigationController = UINavigationController(rootViewController: webViewController)
-        return navigationController
+        return webViewController
     }
     
-    public func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {}
+    public func updateUIViewController(_ uiViewController: SmozieWebViewController, context: Context) {}
 }
 
 // MARK: - View Extension

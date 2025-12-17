@@ -9,8 +9,8 @@ import UIKit
 import WebKit
 import StoreKit
 
-/// Внутренний ViewController для отображения WebView
-final class SmozieWebViewController: UIViewController {
+/// ViewController для отображения WebView
+public final class SmozieWebViewController: UIViewController {
     
     // MARK: - Properties
     
@@ -21,8 +21,6 @@ final class SmozieWebViewController: UIViewController {
     private weak var onFailListener: OnFailListener?
     
     private var webView: WKWebView!
-    private var progressView: UIProgressView!
-    private var progressObservation: NSKeyValueObservation?
     
     /// Callback вызываемый при закрытии (для SwiftUI)
     var onDismiss: (() -> Void)?
@@ -48,16 +46,11 @@ final class SmozieWebViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    deinit {
-        progressObservation?.invalidate()
-    }
-    
     // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupNavigationBar()
         setupJavaScriptInterface()
         loadURL()
     }
@@ -83,48 +76,13 @@ final class SmozieWebViewController: UIViewController {
         webView.allowsBackForwardNavigationGestures = true
         view.addSubview(webView)
         
-        // Настройка индикатора прогресса
-        progressView = UIProgressView(progressViewStyle: .bar)
-        progressView.translatesAutoresizingMaskIntoConstraints = false
-        progressView.tintColor = .systemBlue
-        view.addSubview(progressView)
-        
-        // Constraints
+        // WebView на весь экран
         NSLayoutConstraint.activate([
-            progressView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            progressView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            progressView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            progressView.heightAnchor.constraint(equalToConstant: 2),
-            
-            webView.topAnchor.constraint(equalTo: progressView.bottomAnchor),
+            webView.topAnchor.constraint(equalTo: view.topAnchor),
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        
-        // Наблюдение за прогрессом загрузки
-        progressObservation = webView.observe(\.estimatedProgress, options: .new) { [weak self] webView, _ in
-            self?.progressView.progress = Float(webView.estimatedProgress)
-            self?.progressView.isHidden = webView.estimatedProgress >= 1.0
-        }
-    }
-    
-    private func setupNavigationBar() {
-        title = "Smozie"
-        
-        let closeButton = UIBarButtonItem(
-            barButtonSystemItem: .close,
-            target: self,
-            action: #selector(closeButtonTapped)
-        )
-        navigationItem.leftBarButtonItem = closeButton
-        
-        let refreshButton = UIBarButtonItem(
-            barButtonSystemItem: .refresh,
-            target: self,
-            action: #selector(refreshButtonTapped)
-        )
-        navigationItem.rightBarButtonItem = refreshButton
     }
     
     private func setupJavaScriptInterface() {
@@ -227,18 +185,6 @@ final class SmozieWebViewController: UIViewController {
         webView.load(request)
     }
     
-    // MARK: - Actions
-    
-    @objc private func closeButtonTapped() {
-        dismiss(animated: true) { [weak self] in
-            self?.onDismiss?()
-        }
-    }
-    
-    @objc private func refreshButtonTapped() {
-        webView.reload()
-    }
-    
     // MARK: - Helper Methods
     
     private func showToast(_ message: String) {
@@ -308,23 +254,11 @@ final class SmozieWebViewController: UIViewController {
 
 extension SmozieWebViewController: WKNavigationDelegate {
     
-    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        progressView.isHidden = false
-        progressView.progress = 0
-    }
-    
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        title = webView.title ?? "Smozie"
-        progressView.isHidden = true
-    }
-    
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        progressView.isHidden = true
         onFailListener?.onError(error.localizedDescription)
     }
     
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        progressView.isHidden = true
         onFailListener?.onError(error.localizedDescription)
     }
     
