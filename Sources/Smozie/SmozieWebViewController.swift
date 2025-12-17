@@ -48,14 +48,14 @@ public final class SmozieWebViewController: UIViewController {
     
     // MARK: - Lifecycle
     
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupJavaScriptInterface()
         loadURL()
     }
     
-    override func viewDidAppear(_ animated: Bool) {
+    public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         // Аналог onResume в Android
         webView.evaluateJavaScript("onResume()") { _, _ in }
@@ -254,15 +254,15 @@ public final class SmozieWebViewController: UIViewController {
 
 extension SmozieWebViewController: WKNavigationDelegate {
     
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+    public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         onFailListener?.onError(error.localizedDescription)
     }
     
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+    public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         onFailListener?.onError(error.localizedDescription)
     }
     
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         decisionHandler(.allow)
     }
 }
@@ -271,7 +271,7 @@ extension SmozieWebViewController: WKNavigationDelegate {
 
 extension SmozieWebViewController: WKScriptMessageHandler {
     
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         
         switch message.name {
         case "showToast":
