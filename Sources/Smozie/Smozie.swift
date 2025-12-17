@@ -6,6 +6,11 @@
 //
 
 import UIKit
+import SwiftUI
+
+// MARK: - Re-export SwiftUI components
+@available(iOS 14.0, *)
+public typealias SmozieSwiftUIView = SmozieView
 
 /// Главный класс библиотеки Smozie
 /// Используйте этот класс для инициализации и запуска SDK
