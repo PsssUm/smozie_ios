@@ -110,7 +110,7 @@ public final class SmozieWebViewController: UIViewController {
         
         // Инжектируем JavaScript мост для iOS
         let script = """
-        window.iOS = {
+        window.Android = {
             showToast: function(message) {
                 window.webkit.messageHandlers.showToast.postMessage(message);
             },
