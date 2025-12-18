@@ -53,12 +53,22 @@ public final class SmozieWebViewController: UIViewController {
         setupUI()
         setupJavaScriptInterface()
         loadURL()
+        
+        // Подписываемся на уведомление о возврате приложения из фона (аналог onResume в Android)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
     }
     
-    public override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        // Аналог onResume в Android
-        print("viewDidAppear onResume")
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func appDidBecomeActive() {
+        print("appDidBecomeActive onResume")
         webView.evaluateJavaScript("onResume()") { _, _ in }
     }
     
