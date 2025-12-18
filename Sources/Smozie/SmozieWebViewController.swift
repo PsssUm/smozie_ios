@@ -58,6 +58,7 @@ public final class SmozieWebViewController: UIViewController {
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         // Аналог onResume в Android
+        print("viewDidAppear onResume")
         webView.evaluateJavaScript("onResume()") { _, _ in }
     }
     
@@ -110,7 +111,7 @@ public final class SmozieWebViewController: UIViewController {
         
         // Инжектируем JavaScript мост для iOS
         let script = """
-        window.Android = {
+        window.iOS = {
             showToast: function(message) {
                 window.webkit.messageHandlers.showToast.postMessage(message);
             },
